@@ -1,0 +1,7 @@
+services:
+  jarvis-core:
+    build: .
+    container_name: jarvis-core
+    ports:
+      - "8502:80"
+    restart: unless-stopped

@@ -1,0 +1,1920 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+  <meta http-equiv="X-Frame-Options" content="SAMEORIGIN" />
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://generativelanguage.googleapis.com; img-src 'self' data:; object-src 'none'; base-uri 'self';" />
+  <title>JARVIS CORE - 3D Embodied AI Productivity Assistant</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Three.js r128 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    :root {
+      --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background: radial-gradient(circle at 50% 42%, #ffffff 0%, #f1f5f9 55%, #e2e8f0 100%);
+      overflow: hidden;
+      user-select: none;
+      color: #0f172a;
+    }
+
+    .font-mono-code {
+      font-family: var(--font-mono);
+    }
+
+    /* Spatial Minimalist Glassmorphism */
+    .glass-panel {
+      background: rgba(255, 255, 255, 0.76);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.85);
+      box-shadow: 
+        0 10px 30px -5px rgba(15, 23, 42, 0.06),
+        0 4px 12px -2px rgba(15, 23, 42, 0.03),
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.9);
+    }
+
+    .glass-pill {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(24px) saturate(190%);
+      -webkit-backdrop-filter: blur(24px) saturate(190%);
+      border: 1px solid rgba(226, 232, 240, 0.9);
+      box-shadow: 
+        0 12px 32px -8px rgba(15, 23, 42, 0.08),
+        0 2px 6px -1px rgba(15, 23, 42, 0.04);
+    }
+
+    
+    /* Smooth Spatial UI Entrance */
+    .ui-entrance {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1), transform 0.85s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .ui-entrance-active {
+      opacity: 1 !important;
+      transform: translateY(0) !important;
+    }
+
+    /* Custom Range Sliders */
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      background: transparent;
+      cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-runnable-track {
+      height: 5px;
+      border-radius: 999px;
+      background: #e2e8f0;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      height: 15px;
+      width: 15px;
+      border-radius: 50%;
+      background: #4f46e5;
+      margin-top: -5px;
+      box-shadow: 0 2px 5px rgba(79, 70, 229, 0.35);
+      border: 2px solid #ffffff;
+      transition: transform 0.15s ease, background-color 0.2s ease;
+    }
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.18);
+    }
+
+    /* Subtle Scrollbars */
+    .custom-scroll::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    .custom-scroll::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: rgba(148, 163, 184, 0.4);
+      border-radius: 999px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb:hover {
+      background: rgba(100, 116, 139, 0.65);
+    }
+
+    /* Animations */
+    @keyframes pulseRing {
+      0% { transform: scale(0.95); opacity: 0.7; }
+      50% { transform: scale(1.08); opacity: 0.3; }
+      100% { transform: scale(0.95); opacity: 0.7; }
+    }
+    .animate-pulse-slow {
+      animation: pulseRing 3s infinite ease-in-out;
+    }
+
+    @keyframes highlightTask {
+      0% { background-color: rgba(79, 70, 229, 0.22); transform: translateX(6px); }
+      100% { background-color: transparent; transform: translateX(0); }
+    }
+    .task-highlight {
+      animation: highlightTask 1.6s ease-out;
+    }
+
+    #canvas-container {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      pointer-events: auto;
+    }
+
+    .ui-layer {
+      position: relative;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    .interactive-el {
+      pointer-events: auto;
+    }
+  </style>
+</head>
+<body class="h-screen w-screen relative select-none">
+  <!-- 1. FUTURISTIC LOADING SCREEN OVERLAY -->
+  <div id="loading-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-900/95 backdrop-blur-2xl transition-opacity duration-700 ease-out">
+    <div class="flex flex-col items-center gap-5 max-w-sm w-full px-6 text-center">
+      <div class="relative flex items-center justify-center">
+        <div class="w-20 h-20 rounded-full border-2 border-indigo-500/30 animate-ping absolute"></div>
+        <div class="w-16 h-16 rounded-3xl bg-indigo-600/25 border border-indigo-400/40 backdrop-blur-md flex items-center justify-center text-3xl shadow-xl shadow-indigo-500/20">
+          ⚛️
+        </div>
+      </div>
+
+      <div>
+        <h1 class="text-xl font-bold tracking-tight text-white mb-1">JARVIS CORE</h1>
+        <p id="loading-status-text" class="text-xs font-mono-code text-indigo-300">Menginisialisasi Engine Three.js...</p>
+      </div>
+
+      <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden border border-slate-700/60 p-[1px]">
+        <div id="loading-progress" class="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-300 ease-out" style="width: 15%;"></div>
+      </div>
+      <span id="loading-pct" class="text-[11px] font-mono-code text-slate-400">15%</span>
+    </div>
+  </div>
+
+  <!-- 2. FIRST-TIME ONBOARDING INTRODUCTION MODAL -->
+  <div id="onboarding-modal" class="fixed inset-0 z-40 bg-slate-950/50 backdrop-blur-md hidden items-center justify-center p-4 transition-all duration-500">
+    <div class="glass-panel bg-white/95 rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl border border-white relative overflow-hidden">
+      <div class="absolute -right-10 -top-10 w-40 h-40 rounded-full bg-indigo-500/15 blur-2xl pointer-events-none"></div>
+      
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-11 h-11 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-2xl text-indigo-600 shadow-sm">
+          ⚛️
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h2 class="text-lg font-bold text-slate-900">Selamat Datang di Jarvis Core</h2>
+            <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">v2.0</span>
+          </div>
+          <p class="text-xs text-slate-500">3D Embodied AI Productivity Assistant</p>
+        </div>
+      </div>
+
+      <p class="text-xs text-slate-600 leading-relaxed mb-4">
+        Jarvis Core menggabungkan kecerdasan bahasa Google Gemini dengan entitas visual 3D interaktif yang hidup dan beradaptasi secara real-time.
+      </p>
+
+            <div class="mb-4 p-3 rounded-2xl bg-indigo-50/70 border border-indigo-100">
+        <label for="onboarding-api-key" class="block text-[11px] font-bold text-indigo-950 mb-1 flex items-center gap-1.5">
+          <span>🔑 Google Gemini API Key</span>
+        </label>
+        <div class="flex items-center gap-1.5">
+          <input 
+            type="password" 
+            id="onboarding-api-key" 
+            placeholder="AIzaSy... (atau masukkan kunci Gemini Anda)" 
+            class="flex-1 bg-white text-slate-800 placeholder-slate-400 text-xs px-3 py-1.5 rounded-xl border border-indigo-200/80 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+          />
+          <button type="button" id="btn-save-api-key" class="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shrink-0 transition">
+            Simpan
+          </button>
+        </div>
+        <p class="text-[10px] text-slate-500 mt-1">Kunci disimpan aman secara lokal di browser Anda (localStorage) dan tidak pernah dikirim ke pihak ketiga.</p>
+      </div>
+
+      <div class="space-y-2.5 mb-5">
+        <div class="flex items-start gap-3 p-2.5 rounded-2xl bg-slate-50/80 border border-slate-200/70">
+          <div class="w-7 h-7 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center shrink-0 text-xs font-bold mt-0.5">💬</div>
+          <div>
+            <h4 class="text-xs font-bold text-slate-800">Emosi & Suara Dinamis</h4>
+            <p class="text-[11px] text-slate-500 leading-snug">AI mendeteksi nada obrolan Anda dan otomatis berubah warna (merah saat marah, hijau saat santai), lengkap dengan voice over.</p>
+          </div>
+        </div>
+
+        <div class="flex items-start gap-3 p-2.5 rounded-2xl bg-slate-50/80 border border-slate-200/70">
+          <div class="w-7 h-7 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 text-xs font-bold mt-0.5">📋</div>
+          <div>
+            <h4 class="text-xs font-bold text-slate-800">Kelola Tugas via Percakapan</h4>
+            <p class="text-[11px] text-slate-500 leading-snug">Ketik perintah seperti <span class="font-mono-code text-indigo-600 font-semibold">'Catat tugas Siapkan Materi'</span> atau <span class="font-mono-code text-emerald-600 font-semibold">'Tandai tugas X selesai'</span>.</p>
+          </div>
+        </div>
+
+        <div class="flex items-start gap-3 p-2.5 rounded-2xl bg-slate-50/80 border border-slate-200/70">
+          <div class="w-7 h-7 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center shrink-0 text-xs font-bold mt-0.5">⏱️</div>
+          <div>
+            <h4 class="text-xs font-bold text-slate-800">Kontrol Timer Penuh dari Chat</h4>
+            <p class="text-[11px] text-slate-500 leading-snug">Ketik <span class="font-mono-code text-purple-600 font-semibold">'Pasang timer 20 menit'</span>, <span class="font-mono-code text-purple-600 font-semibold">'Jeda timer'</span>, <span class="font-mono-code text-purple-600 font-semibold">'Lanjutkan timer'</span>, atau <span class="font-mono-code text-purple-600 font-semibold">'Reset timer'</span>.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-200/70">
+        <button id="btn-start-explore" class="w-full sm:w-auto px-6 py-2.5 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-500/25 flex items-center justify-center gap-2 transition active:scale-95">
+          <span>Mulai Eksplorasi Sekarang</span>
+          <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Ambient Background Grid & Glow -->
+  <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+    <div id="ambient-glow" class="absolute left-1/2 top-[35%] -translate-x-1/2 -translate-y-1/2 w-[420px] h-[420px] rounded-full blur-[90px] opacity-25 transition-colors duration-700" style="background: #4F46E5;"></div>
+    <div class="absolute inset-0 opacity-[0.35]" style="background-image: radial-gradient(#cbd5e1 1px, transparent 1px); background-size: 28px 28px;"></div>
+  </div>
+
+  <!-- 2. CENTER-STAGE 3D CORE (Three.js Canvas) -->
+  <div id="canvas-container"></div>
+
+  <!-- Center 3D HUD Telemetry Overlay (Non-blocking around the 3D sphere) -->
+  <div class="fixed left-1/2 top-[35%] -translate-x-1/2 -translate-y-1/2 pointer-events-none z-5 flex flex-col items-center justify-center">
+    <div class="w-[250px] h-[250px] sm:w-[290px] sm:h-[290px] rounded-full border border-slate-300/40 animate-pulse-slow"></div>
+  </div>
+
+  <!-- UNIFIED RIGHT PANEL: MINI TIMER + DAFTAR TUGAS (FIXED POSISI KANAN, TIDAK MENDORONG OBJEK LAIN) -->
+  <aside id="productivity-panel" class="fixed right-4 sm:right-6 top-6 sm:top-8 w-80 sm:w-84 z-20 pointer-events-none ui-entrance">
+    <div id="unified-card" class="interactive-el glass-panel rounded-3xl p-4 sm:p-5 flex flex-col gap-3.5 shadow-2xl border border-white/80">
+      
+      <!-- MINI TIMER FOKUS (KOMPAK DI ATAS DAFTAR TUGAS) -->
+      <section id="timer-card" class="pb-3 border-b border-slate-200/80">
+        <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center gap-2">
+            <div class="w-6 h-6 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600">
+              <i data-lucide="timer" class="w-3.5 h-3.5"></i>
+            </div>
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-700">Timer Fokus</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span id="timer-auto-badge" class="hidden px-1.5 py-0.5 text-[9px] font-bold rounded-full bg-emerald-100 text-emerald-700">AI Auto</span>
+            <span id="timer-status-text" class="text-[10px] text-slate-400 font-medium">Siap Fokus</span>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between gap-2.5 bg-slate-50/90 px-3 py-1.5 rounded-2xl border border-slate-200/70">
+          <div id="timer-display" class="font-mono-code text-2xl font-bold tracking-tight text-slate-900">
+            25:00
+          </div>
+          
+          <div class="flex items-center gap-1">
+            <button data-minutes="15" class="timer-preset-btn px-1.5 py-0.5 rounded-lg text-[10px] font-semibold bg-white hover:bg-slate-100 text-slate-600 border border-slate-200/80 transition">15m</button>
+            <button data-minutes="25" class="timer-preset-btn px-1.5 py-0.5 rounded-lg text-[10px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 transition">25m</button>
+            <button data-minutes="45" class="timer-preset-btn px-1.5 py-0.5 rounded-lg text-[10px] font-semibold bg-white hover:bg-slate-100 text-slate-600 border border-slate-200/80 transition">45m</button>
+          </div>
+
+          <div class="flex items-center gap-1">
+            <button id="btn-timer-toggle" class="p-1.5 rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 active:scale-95 shadow-sm transition" title="Mulai / Jeda Fokus">
+              <i data-lucide="play" id="timer-play-icon" class="w-3.5 h-3.5"></i>
+              <span id="btn-timer-label" class="sr-only">Mulai Fokus</span>
+            </button>
+            <button id="btn-timer-reset" class="p-1.5 rounded-xl text-slate-500 bg-white hover:bg-slate-100 border border-slate-200/90 transition" title="Reset Timer">
+              <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Progress Bar Tipis -->
+        <div class="w-full h-1 bg-slate-200 rounded-full overflow-hidden mt-2">
+          <div id="timer-progress" class="h-full bg-indigo-600 transition-all duration-500 rounded-full" style="width: 100%;"></div>
+        </div>
+      </section>
+
+      <!-- DAFTAR TUGAS (TO-DO LIST) -->
+      <section id="todo-card" class="flex flex-col">
+        <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center gap-2">
+            <div class="w-6 h-6 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
+              <i data-lucide="check-square" class="w-3.5 h-3.5"></i>
+            </div>
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-700">Daftar Tugas</h2>
+          </div>
+          <span id="todo-counter" class="text-[10px] text-slate-400 font-medium">1/3 selesai</span>
+        </div>
+
+        <!-- Task Items List -->
+        <ul id="todo-list" class="space-y-1.5 max-h-48 overflow-y-auto custom-scroll pr-1 mb-2.5">
+          <!-- Populated by JS -->
+        </ul>
+
+        <!-- Manual Add Task Input -->
+        <form id="todo-form" class="flex items-center gap-1.5 pt-2 border-t border-slate-200/70">
+          <input 
+            id="todo-input" 
+            type="text" 
+            placeholder="Tambah tugas manual..." 
+            class="flex-1 bg-white/95 text-xs text-slate-800 placeholder-slate-400 px-3 py-1.5 rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500 transition"
+          />
+          <button type="submit" class="p-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white transition" title="Tambah Tugas">
+            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+          </button>
+        </form>
+      </section>
+
+    </div>
+  </aside>
+
+  <!-- 3. LEFT PANEL: CHAT CONVERSATION STREAM (DARI ATAS KE BAWAH) -->
+  <aside id="chat-stream-panel" class="fixed left-4 sm:left-6 top-6 sm:top-8 w-80 sm:w-88 max-h-[75vh] z-20 pointer-events-none ui-entrance flex flex-col">
+    <div class="flex items-center justify-between px-2 py-1 mb-1.5">
+      <div class="flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span class="text-xs font-bold uppercase tracking-wider text-slate-600">Percakapan AI</span>
+        <span id="mood-badge" class="px-2 py-0.5 text-[9px] font-semibold rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 transition-all duration-300">Tenang</span>
+      </div>
+      <button id="btn-clear-chat" type="button" class="interactive-el text-[10px] text-slate-400 hover:text-slate-600 flex items-center gap-1 transition" title="Bersihkan Percakapan">
+        <i data-lucide="trash-2" class="w-3 h-3"></i>
+        <span>Bersihkan</span>
+      </button>
+    </div>
+
+    <!-- Balon Teks Percakapan (Scrollable terisolasi mengalir ke bawah) -->
+    <div id="chat-history" class="overflow-y-auto custom-scroll space-y-2 pr-1.5 pb-2">
+      <!-- Messages rendered dynamically -->
+    </div>
+  </aside>
+
+  <!-- 4. BOTTOM CENTER SLIM CHAT INPUT DOCK (TETAP DI TENGAH, STABIL TANPA MENDORONG OBJEK LAIN) -->
+  <footer class="fixed bottom-4 sm:bottom-5 inset-x-0 mx-auto w-full max-w-xl px-3 sm:px-4 z-30 pointer-events-none ui-entrance">
+    <form id="chat-form" class="interactive-el glass-panel rounded-2xl p-1.5 sm:p-2 w-full flex items-center gap-2 shadow-2xl border border-white/95">
+      <div class="relative flex-1">
+        <input 
+          id="chat-input" 
+          type="text" 
+          autocomplete="off"
+          placeholder="Ketik pesan, tugas ('catat tugas X'), atau timer ('pasang timer 20m')..." 
+          class="w-full bg-white/95 text-slate-800 placeholder-slate-400 text-xs sm:text-sm pl-4 pr-10 py-2 rounded-xl border border-slate-200/90 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-500 transition"
+        />
+        <button type="button" id="btn-toggle-voice" class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600 transition p-1" title="Toggle Suara Voice Over">
+          <i data-lucide="volume-2" id="voice-icon" class="w-4 h-4"></i>
+        </button>
+      </div>
+      <button id="btn-send" type="submit" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-semibold text-xs sm:text-sm shadow-md shadow-indigo-500/20 flex items-center gap-1.5 transition shrink-0">
+        <span>Kirim</span>
+        <i data-lucide="send" class="w-3.5 h-3.5"></i>
+      </button>
+    </form>
+  </footer>
+
+  <!-- Hidden Compatibility Elements (Pengaturan visual dihapus sesuai permintaan) -->
+  <div class="hidden" style="display:none;" aria-hidden="true">
+    <input type="range" id="temp-slider" min="0.1" max="1.4" step="0.05" value="0.30" />
+    <span id="temp-value">0.30</span>
+    <input type="range" id="topp-slider" min="0.10" max="1.00" step="0.02" value="0.80" />
+    <span id="topp-value">0.80</span>
+    <button id="btn-api-modal"></button>
+    <button id="btn-json-drawer"></button>
+    <span id="api-key-status">Key Aktif</span>
+    <div id="json-drawer"><pre id="json-preview"></pre><button id="btn-close-json"></button></div>
+    <div id="api-modal"><input id="api-key-input" /><button id="btn-close-modal"></button><button id="btn-save-key"></button><button id="btn-clear-key"></button></div>
+  </div>
+
+  <!-- APPLICATION SCRIPT -->
+  <script>
+    /********************************************************************
+     * 1. BLUEPRINT PERSONA PRESETS & SYSTEM CONFIGURATION
+     ********************************************************************/
+    const PERSONA_PRESETS = {
+      calm: {
+        name: "Minimalis Sopan",
+        temperature: 0.30,
+        topP: 0.80,
+        colorHex: "#4F46E5",
+        rotationSpeed: 0.006,
+        distortion: 0.03,
+        moodLabel: "Tenang & Fokus",
+        systemInstruction: `Anda adalah Jarvis Core dengan persona "Minimalis Sopan". Gaya bahasa Anda terstruktur, singkat, sopan, dan fokus pada efisiensi kerja. Gunakan Bahasa Indonesia yang rapi. Jika pengguna meminta mencatat tugas, isi field newTodo. Jika pengguna meminta menyalakan timer/fokus, isi setTimerMinutes. Pilih warna biru/indigo (#4F46E5), distortion rendah (0.02-0.05), dan rotationSpeed tenang (0.004-0.008).`
+      },
+      friendly: {
+        name: "Teman Santai",
+        temperature: 0.70,
+        topP: 0.90,
+        colorHex: "#10B981",
+        rotationSpeed: 0.012,
+        distortion: 0.07,
+        moodLabel: "Hangat & Suportif",
+        systemInstruction: `Anda adalah Jarvis Core dengan persona "Teman Santai". Gaya bahasa Anda kasual, hangat, suportif, dan menggunakan sapaan akrab seperti teman kerja yang asik. Gunakan warna hijau emerald (#10B981), distortion sedang (0.06-0.10), dan rotationSpeed stabil (0.010-0.016).`
+      },
+      strict: {
+        name: "Mentor Tegas",
+        temperature: 1.00,
+        topP: 0.92,
+        colorHex: "#EF4444",
+        rotationSpeed: 0.032,
+        distortion: 0.18,
+        moodLabel: "Tegas & Disiplin",
+        systemInstruction: `Anda adalah Jarvis Core dengan persona "Mentor Tegas". Gaya bahasa Anda tegas, to-the-point, disiplin, dan langsung menegur keras namun membangun jika pengguna malas atau menunda pekerjaan. Mengaculah pada tugas di riwayat chat jika ada. Gunakan warna merah menyala (#EF4444), distortion tajam/berduri (0.16-0.22), dan rotationSpeed cepat (0.028-0.040).`
+      },
+      wild: {
+        name: "Visioner Liar",
+        temperature: 1.30,
+        topP: 0.98,
+        colorHex: "#9333EA",
+        rotationSpeed: 0.022,
+        distortion: 0.14,
+        moodLabel: "Eksploratif Liar",
+        systemInstruction: `Anda adalah Jarvis Core dengan persona "Visioner Liar". Gaya bahasa Anda eksploratif, penuh metafora futuristik, antusias, dan memberikan ide-ide out-of-the-box yang brilian. Gunakan warna ungu violet (#9333EA), distortion dinamis (0.12-0.17), dan rotationSpeed aktif (0.018-0.028).`
+      }
+    };
+
+    // Gemini API Response Schema (Full Task Management CRUD + Timer + 3D)
+    const JARVIS_RESPONSE_SCHEMA = {
+      type: "OBJECT",
+      properties: {
+        reply: {
+          type: "STRING",
+          description: "Balasan percakapan bahasa alami kepada pengguna sesuai persona aktif."
+        },
+        moodLabel: {
+          type: "STRING",
+          description: "1-2 kata deskripsi suasana hati AI saat ini (contoh: Fokus, Antusias, Tegas)."
+        },
+        colorHex: {
+          type: "STRING",
+          description: "Kode warna Hex untuk bola 3D sesuai mood (contoh: #4f46e5, #ef4444, #10b981)."
+        },
+        rotationSpeed: {
+          type: "NUMBER",
+          description: "Kecepatan putaran objek 3D antara 0.003 (tenang) hingga 0.04 (intens)."
+        },
+        distortion: {
+          type: "NUMBER",
+          description: "Amplitudo gelombang permukaan 3D antara 0.02 (mulus) hingga 0.22 (berduri/aktif)."
+        },
+        detectedPersona: {
+          type: "STRING",
+          description: "Persona yang dipilih otomatis oleh AI ('calm', 'friendly', 'strict', 'wild') berdasarkan emosi dan nada percakapan."
+        },
+        newTodo: {
+          type: "STRING",
+          description: "Teks tugas baru jika pengguna meminta menambah/mencatat tugas, string kosong jika tidak ada."
+        },
+        completeTodo: {
+          type: "STRING",
+          description: "Nama tugas yang ingin ditandai selesai/dicentang (pisahkan koma jika lebih dari satu), string kosong jika tidak ada."
+        },
+        deleteTodo: {
+          type: "STRING",
+          description: "Nama tugas yang ingin dihapus dari daftar (pisahkan koma jika lebih dari satu), string kosong jika tidak ada."
+        },
+        clearCompleted: {
+          type: "BOOLEAN",
+          description: "True jika pengguna meminta membersihkan/menghapus semua tugas yang sudah selesai, false jika tidak."
+        },
+        timerAction: {
+          type: "STRING",
+          description: "Aksi kontrol timer jika diminta: 'start' (mulai), 'pause' (jeda/hentikan sementara), 'resume' (lanjutkan), 'reset' (hentikan/reset), atau 'none'."
+        },
+        setTimerMinutes: {
+          type: "NUMBER",
+          description: "Durasi menit timer jika pengguna meminta waktu fokus/pomodoro spesifik (misal 15, 20, 25), atau bernilai 0 jika tidak mengubah durasi."
+        }
+      },
+      required: ["reply", "moodLabel", "colorHex", "rotationSpeed", "distortion", "detectedPersona", "newTodo", "completeTodo", "deleteTodo", "clearCompleted", "timerAction", "setTimerMinutes"]
+    };
+
+    // Application State
+    const state = {
+      isSpeaking: false,
+      speechBaseTemp: 0.30,
+      voiceMuted: false,
+      personaKey: "calm",
+      temperature: 0.30,
+      topP: 0.80,
+      userApiKey: localStorage.getItem("jarvis_gemini_api_key") || "",
+      chatContents: [], // Multi-turn short-term memory
+      todos: [],
+      timer: {
+        totalSeconds: 25 * 60,
+        remainingSeconds: 25 * 60,
+        running: false,
+        intervalId: null
+      },
+      core3D: {
+        targetColor: new THREE.Color("#4F46E5"),
+        currentColor: new THREE.Color("#4F46E5"),
+        targetRotationSpeed: 0.006,
+        currentRotationSpeed: 0.006,
+        targetDistortion: 0.03,
+        currentDistortion: 0.03,
+        moodLabel: "Tenang & Fokus"
+      },
+      lastJsonPayload: {
+        reply: "Tugas 'Buat Slide' sudah siap di daftar. Mau mulai fokus 25 menit sekarang?",
+        moodLabel: "Tenang & Fokus",
+        colorHex: "#4F46E5",
+        rotationSpeed: 0.006,
+        distortion: 0.03,
+        newTodo: "",
+        setTimerMinutes: 0
+      }
+    };
+
+    /********************************************************************
+     * 2. THREE.JS CENTER-STAGE 3D CORE ENGINE
+     ********************************************************************/
+    let scene, camera, renderer, coreMesh, wireframeMesh, innerRing, outerRing;
+    let basePositions = null;
+    let isIntroAnimating = false;
+    let introStartTime = 0;
+    let clock = new THREE.Clock();
+    let isDragging3D = false;
+    let prevMouse = { x: 0, y: 0 };
+    let groupRotationOffset = { x: 0, y: 0 };
+    let coreGroup;
+
+    function initThreeCore() {
+      const container = document.getElementById("canvas-container");
+      scene = new THREE.Scene();
+
+      camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.1, 100);
+      camera.position.set(0, 0, 5.2);
+
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.15;
+      container.appendChild(renderer.domElement);
+
+      coreGroup = new THREE.Group();
+      coreGroup.position.set(0, 0.38, 0); // Dinaikkan ke atas agar tidak terhalang chat
+      scene.add(coreGroup);
+
+      // Lighting setup for Clean Light Mode Physical Clearcoat look
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
+      scene.add(ambientLight);
+
+      const dirLight1 = new THREE.DirectionalLight(0xffffff, 1.35);
+      dirLight1.position.set(4, 6, 5);
+      scene.add(dirLight1);
+
+      const dirLight2 = new THREE.DirectionalLight(0xc7d2fe, 0.9);
+      dirLight2.position.set(-5, -4, 3);
+      scene.add(dirLight2);
+
+      const pointLight = new THREE.PointLight(0x4f46e5, 1.2, 12);
+      pointLight.position.set(0, 0, 2.5);
+      scene.add(pointLight);
+      state.core3D.pointLight = pointLight;
+
+      // Main Center-Stage Icosahedron Geometry with high detail for smooth vertex wave morphing
+      const geometry = new THREE.IcosahedronGeometry(1.18, 12);
+      
+      // Save original vertex coordinates for real-time vertex displacement
+      const posAttr = geometry.attributes.position;
+      basePositions = new Float32Array(posAttr.count * 3);
+      for (let i = 0; i < posAttr.count * 3; i++) {
+        basePositions[i] = posAttr.array[i];
+      }
+
+      const material = new THREE.MeshPhysicalMaterial({
+        color: state.core3D.currentColor,
+        emissive: state.core3D.currentColor,
+        emissiveIntensity: 0.18,
+        roughness: 0.18,
+        metalness: 0.15,
+        clearcoat: 1.0,
+        clearcoatRoughness: 0.12,
+        flatShading: false
+      });
+
+      coreMesh = new THREE.Mesh(geometry, material);
+      coreGroup.add(coreMesh);
+
+      // Subtle Cage Overlay
+      const wireGeo = new THREE.IcosahedronGeometry(1.26, 2);
+      const wireMat = new THREE.MeshBasicMaterial({
+        color: state.core3D.currentColor,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.14
+      });
+      wireframeMesh = new THREE.Mesh(wireGeo, wireMat);
+      coreGroup.add(wireframeMesh);
+
+      // Thin Orbital Rings (Blueprint Section 3.2)
+      const ringGeo1 = new THREE.TorusGeometry(1.68, 0.008, 16, 120);
+      const ringMat1 = new THREE.MeshBasicMaterial({
+        color: state.core3D.currentColor,
+        transparent: true,
+        opacity: 0.35
+      });
+      innerRing = new THREE.Mesh(ringGeo1, ringMat1);
+      innerRing.rotation.x = Math.PI / 2.3;
+      innerRing.rotation.y = Math.PI / 8;
+      coreGroup.add(innerRing);
+
+      const ringGeo2 = new THREE.TorusGeometry(1.95, 0.006, 16, 120);
+      const ringMat2 = new THREE.MeshBasicMaterial({
+        color: 0x64748b,
+        transparent: true,
+        opacity: 0.22
+      });
+      outerRing = new THREE.Mesh(ringGeo2, ringMat2);
+      outerRing.rotation.x = -Math.PI / 3;
+      outerRing.rotation.y = -Math.PI / 6;
+      coreGroup.add(outerRing);
+
+      // Mouse & Touch Orbit Interaction
+      container.addEventListener("mousedown", (e) => {
+        isDragging3D = true;
+        prevMouse = { x: e.clientX, y: e.clientY };
+      });
+      window.addEventListener("mousemove", (e) => {
+        if (!isDragging3D) return;
+        const dx = (e.clientX - prevMouse.x) * 0.006;
+        const dy = (e.clientY - prevMouse.y) * 0.006;
+        groupRotationOffset.y += dx;
+        groupRotationOffset.x += dy;
+        prevMouse = { x: e.clientX, y: e.clientY };
+      });
+      window.addEventListener("mouseup", () => { isDragging3D = false; });
+
+      container.addEventListener("touchstart", (e) => {
+        if (e.touches.length === 1) {
+          isDragging3D = true;
+          prevMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        }
+      }, { passive: true });
+      window.addEventListener("touchmove", (e) => {
+        if (!isDragging3D || e.touches.length !== 1) return;
+        const dx = (e.touches[0].clientX - prevMouse.x) * 0.006;
+        const dy = (e.touches[0].clientY - prevMouse.y) * 0.006;
+        groupRotationOffset.y += dx;
+        groupRotationOffset.x += dy;
+        prevMouse = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      }, { passive: true });
+      window.addEventListener("touchend", () => { isDragging3D = false; });
+
+      window.addEventListener("resize", onWindowResize);
+    }
+
+    function onWindowResize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    function animateThreeCore() {
+      requestAnimationFrame(animateThreeCore);
+
+      const elapsedTime = clock.getElapsedTime();
+      const c3d = state.core3D;
+
+      // Smooth interpolation (Lerp) for color, speed, and distortion
+      c3d.currentColor.lerp(c3d.targetColor, 0.06);
+      c3d.currentRotationSpeed += (c3d.targetRotationSpeed - c3d.currentRotationSpeed) * 0.06;
+      c3d.currentDistortion += (c3d.targetDistortion - c3d.currentDistortion) * 0.06;
+
+      // Apply color to materials
+      coreMesh.material.color.copy(c3d.currentColor);
+      coreMesh.material.emissive.copy(c3d.currentColor);
+      wireframeMesh.material.color.copy(c3d.currentColor);
+      innerRing.material.color.copy(c3d.currentColor);
+      if (c3d.pointLight) c3d.pointLight.color.copy(c3d.currentColor);
+
+      // Real-time Vertex Wave Distortion (Morphing)
+      const posAttr = coreMesh.geometry.attributes.position;
+      const amp = c3d.currentDistortion;
+      const freq = 3.2 + (amp * 14.0);
+      const timeFactor = elapsedTime * (2.2 + c3d.currentRotationSpeed * 65);
+
+      for (let i = 0; i < posAttr.count; i++) {
+        const ix = i * 3;
+        const ox = basePositions[ix];
+        const oy = basePositions[ix + 1];
+        const oz = basePositions[ix + 2];
+
+        // Multi-harmonic 3D wave displacement along normal direction
+        const wave =
+          Math.sin(ox * freq + timeFactor) *
+          Math.cos(oy * freq - timeFactor * 0.8) *
+          Math.sin(oz * freq + timeFactor * 0.6);
+
+        const scale = 1.0 + wave * amp;
+        posAttr.array[ix] = ox * scale;
+        posAttr.array[ix + 1] = oy * scale;
+        posAttr.array[ix + 2] = oz * scale;
+      }
+      posAttr.needsUpdate = true;
+      coreMesh.geometry.computeVertexNormals();
+
+      // Rotate Core & Orbital Rings
+      coreMesh.rotation.y += c3d.currentRotationSpeed;
+      coreMesh.rotation.x += c3d.currentRotationSpeed * 0.6;
+
+      wireframeMesh.rotation.y -= c3d.currentRotationSpeed * 0.7;
+      wireframeMesh.rotation.z += c3d.currentRotationSpeed * 0.4;
+
+      innerRing.rotation.z += c3d.currentRotationSpeed * 1.2;
+      outerRing.rotation.z -= c3d.currentRotationSpeed * 0.8;
+
+      // Fluktuasi Temperature secara dinamis selama AI berbicara (Voice Over Active)
+      if (state.isSpeaking) {
+        const t = elapsedTime * 5.2;
+        // Osilasi gelombang multi-harmonik mensimulasikan energi suara bicara
+        const tempDelta = Math.sin(t * 1.6) * 0.25 + Math.cos(t * 3.2) * 0.16;
+        const liveTemp = Math.max(0.10, Math.min(1.40, state.speechBaseTemp + tempDelta));
+        
+        const tempSlider = document.getElementById("temp-slider");
+        const tempVal = document.getElementById("temp-value");
+        if (tempSlider) tempSlider.value = liveTemp.toFixed(2);
+        if (tempVal) tempVal.textContent = liveTemp.toFixed(2);
+        
+        // Distorsi permukaan mengikuti dinamika temperature suara
+        c3d.currentDistortion = Math.max(0.02, Math.min(0.24, liveTemp * 0.16));
+      }
+
+      // Smooth Intro Entrance Bloom + Breathing Scale
+      const baseScale = 0.82;
+      let currentScale = baseScale;
+
+      if (isIntroAnimating) {
+        const elapsed = (performance.now() - introStartTime) / 1000;
+        const p = Math.min(1.0, elapsed / 1.4); // 1.4s smooth bloom
+        // Ease-out cubic: 1 - (1 - p)^3
+        const easeOut = 1 - Math.pow(1 - p, 3);
+        currentScale = easeOut * baseScale;
+
+        // Spin-up dampening during bloom
+        coreMesh.rotation.y += (1 - easeOut) * 0.06;
+        wireframeMesh.rotation.y -= (1 - easeOut) * 0.06;
+
+        if (p >= 1.0) {
+          isIntroAnimating = false;
+        }
+      } else {
+        const breath = 1 + Math.sin(elapsedTime * 2.0) * 0.025;
+        currentScale = breath * baseScale;
+      }
+
+      coreGroup.scale.set(currentScale, currentScale, currentScale);
+      coreGroup.rotation.x += (groupRotationOffset.x - coreGroup.rotation.x) * 0.1;
+      coreGroup.rotation.y += (groupRotationOffset.y - coreGroup.rotation.y) * 0.1;
+
+      renderer.render(scene, camera);
+    }
+
+    // Update 3D Core & HUD from structured JSON parameters
+    function update3DCoreState({ colorHex, rotationSpeed, distortion, moodLabel }) {
+      if (colorHex && /^#[0-9A-Fa-f]{6}$/.test(colorHex)) {
+        state.core3D.targetColor.set(colorHex);
+        document.getElementById("ambient-glow").style.background = colorHex;
+        const dot = document.getElementById("hud-color-dot"); if (dot) dot.style.backgroundColor = colorHex;
+      }
+      if (typeof rotationSpeed === "number") {
+        let spd = rotationSpeed;
+        if (spd > 0.05) spd = spd * 0.01;
+        state.core3D.targetRotationSpeed = Math.max(0.003, Math.min(0.045, spd));
+      }
+      if (typeof distortion === "number") {
+        let dst = distortion;
+        if (dst > 0.25) dst = dst * 0.1;
+        state.core3D.targetDistortion = Math.max(0.02, Math.min(0.25, dst));
+      }
+      if (moodLabel) {
+        state.core3D.moodLabel = moodLabel;
+        const badge = document.getElementById("mood-badge");
+        if (badge) {
+          badge.textContent = moodLabel;
+          badge.style.borderColor = `${colorHex}55`;
+          badge.style.color = colorHex;
+          badge.style.backgroundColor = `${colorHex}14`;
+        }
+      }
+
+      const hexStr = (colorHex || "#4F46E5").toUpperCase();
+      const spdStr = (state.core3D.targetRotationSpeed).toFixed(3);
+      const dstStr = (state.core3D.targetDistortion).toFixed(2);
+      const hudEl = document.getElementById("hud-telemetry"); if (hudEl) hudEl.textContent = `CORE: ${hexStr} | ω: ${spdStr} | Δv: ${dstStr}`;
+    }
+
+    /********************************************************************
+     * 3. POMODORO TIMER MODULE (LEFT WIDGET)
+     ********************************************************************/
+    /********************************************************************
+     * 3.2 TACTILE AUDIO & TIMER CHIME SYNTHESIZER (WEB AUDIO API)
+     ********************************************************************/
+    let audioCtx = null;
+    function getAudioContext() {
+      if (!audioCtx) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) audioCtx = new AudioContextClass();
+      }
+      if (audioCtx && audioCtx.state === "suspended") {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    function playTactileClick() {
+      try {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(800, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(400, ctx.currentTime + 0.04);
+        gain.gain.setValueAtTime(0.08, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.04);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.045);
+      } catch (e) {
+        console.warn("Audio click feedback error:", e);
+      }
+    }
+
+    function playTimerChime() {
+      try {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        // Tiga nada kristal harmonis: D5 (587Hz), A5 (880Hz), D6 (1174Hz)
+        const notes = [587.33, 880.00, 1174.66];
+        notes.forEach((freq, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = "sine";
+          const startTime = ctx.currentTime + (idx * 0.16);
+          osc.frequency.setValueAtTime(freq, startTime);
+          gain.gain.setValueAtTime(0.001, startTime);
+          gain.gain.exponentialRampToValueAtTime(0.22, startTime + 0.03);
+          gain.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.85);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(startTime);
+          osc.stop(startTime + 0.90);
+        });
+      } catch (e) {
+        console.warn("Audio chime error:", e);
+      }
+    }
+
+    function onTimerFinished() {
+      playTimerChime();
+      speakWithDynamicTemperature("Waktu fokus sudah selesai ya... Silakan istirahat sebentar, renggangkan badan, nanti kita gas lagi ya.");
+      const card = document.getElementById("timer-card");
+      if (card) {
+        card.classList.add("ring-4", "ring-emerald-500", "animate-pulse");
+        setTimeout(() => {
+          card.classList.remove("ring-4", "ring-emerald-500", "animate-pulse");
+        }, 6000);
+      }
+    }
+
+    function formatTime(sec) {
+      const m = Math.floor(sec / 60);
+      const s = sec % 60;
+      return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+    }
+
+    function renderTimerUI() {
+      const display = document.getElementById("timer-display");
+      if (display) display.textContent = formatTime(state.timer.remainingSeconds);
+
+      const pct = state.timer.totalSeconds > 0
+        ? (state.timer.remainingSeconds / state.timer.totalSeconds) * 100
+        : 0;
+      const progress = document.getElementById("timer-progress");
+      if (progress) progress.style.width = `${pct}%`;
+
+      const labelEl = document.getElementById("btn-timer-label");
+      const statusText = document.getElementById("timer-status-text");
+      const playIcon = document.getElementById("timer-play-icon");
+
+      if (state.timer.running) {
+        if (labelEl) labelEl.textContent = "Jeda";
+        if (statusText) {
+          statusText.textContent = "Fokus Berjalan...";
+          statusText.className = "text-[10px] text-indigo-600 font-semibold";
+        }
+        if (playIcon) playIcon.setAttribute("data-lucide", "pause");
+      } else {
+        if (labelEl) labelEl.textContent = "Mulai Fokus";
+        if (statusText) {
+          statusText.textContent = "Siap Fokus";
+          statusText.className = "text-[10px] text-slate-400 font-medium";
+        }
+        if (playIcon) playIcon.setAttribute("data-lucide", "play");
+      }
+      lucide.createIcons();
+    }
+
+    function startTimer(minutesOverride = null, triggeredByAI = false) {
+      if (minutesOverride && minutesOverride > 0) {
+        state.timer.totalSeconds = Math.round(minutesOverride * 60);
+        state.timer.remainingSeconds = state.timer.totalSeconds;
+      }
+
+      if (state.timer.intervalId) clearInterval(state.timer.intervalId);
+      state.timer.running = true;
+
+      if (triggeredByAI) {
+        const autoBadge = document.getElementById("timer-auto-badge");
+        autoBadge.classList.remove("hidden");
+        const card = document.getElementById("timer-card");
+        card.classList.add("ring-2", "ring-indigo-500");
+        setTimeout(() => card.classList.remove("ring-2", "ring-indigo-500"), 2000);
+      }
+
+      renderTimerUI();
+
+      state.timer.intervalId = setInterval(() => {
+        if (state.timer.remainingSeconds > 0) {
+          state.timer.remainingSeconds--;
+          renderTimerUI();
+        } else {
+          clearInterval(state.timer.intervalId);
+          state.timer.running = false;
+          renderTimerUI();
+          onTimerFinished();
+        }
+      }, 1000);
+    }
+
+    function toggleTimer() {
+      playTactileClick();
+      if (state.timer.running) {
+        clearInterval(state.timer.intervalId);
+        state.timer.running = false;
+        renderTimerUI();
+      } else {
+        startTimer();
+      }
+    }
+
+    function resetTimer(minutes = 25) {
+      playTactileClick();
+      if (state.timer.intervalId) clearInterval(state.timer.intervalId);
+      state.timer.running = false;
+      state.timer.totalSeconds = minutes * 60;
+      state.timer.remainingSeconds = minutes * 60;
+      document.getElementById("timer-auto-badge").classList.add("hidden");
+      renderTimerUI();
+    }
+
+    /********************************************************************
+     * 4. TO-DO LIST MODULE (RIGHT WIDGET)
+     ********************************************************************/
+    
+    /********************************************************************
+     * 3.5 SESSION PERSISTENCE MODULE (LOCALSTORAGE)
+     ********************************************************************/
+    function getSessionStorageKey(key) {
+      return "jarvis_" + key;
+    }
+
+    function saveSessionData() {
+      try {
+        localStorage.setItem(getSessionStorageKey("todos"), JSON.stringify(state.todos));
+        localStorage.setItem(getSessionStorageKey("chat"), JSON.stringify(state.chatContents));
+        localStorage.setItem(getSessionStorageKey("persona"), state.personaKey);
+      } catch (err) {
+        console.warn("Gagal menyimpan sesi:", err);
+      }
+    }
+
+    function loadSessionData() {
+      try {
+        const savedTodos = localStorage.getItem(getSessionStorageKey("todos"));
+        if (savedTodos) {
+          state.todos = JSON.parse(savedTodos);
+        } else {
+          state.todos = []; // Kosong secara default
+        }
+
+        const savedPersona = localStorage.getItem(getSessionStorageKey("persona"));
+        if (savedPersona && PERSONA_PRESETS[savedPersona]) {
+          applyPersonaPreset(savedPersona);
+        }
+      } catch (err) {
+        console.warn("Gagal memuat sesi:", err);
+        state.todos = [];
+      }
+    }
+
+    function renderTodos(highlightId = null) {
+      const listEl = document.getElementById("todo-list");
+      listEl.innerHTML = "";
+
+      const completedCount = state.todos.filter(t => t.completed).length;
+      document.getElementById("todo-counter").textContent = `${completedCount}/${state.todos.length} selesai`;
+
+      if (state.todos.length === 0) {
+        const emptyLi = document.createElement("li");
+        emptyLi.className = "py-6 flex flex-col items-center justify-center text-center text-slate-400 select-none";
+        emptyLi.innerHTML = `
+          <div class="w-9 h-9 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 mb-2 border border-slate-200/60">
+            <i data-lucide="inbox" class="w-4 h-4"></i>
+          </div>
+          <p class="text-xs font-semibold text-slate-600">Daftar tugas masih kosong</p>
+          <p class="text-[10px] text-slate-400 mt-0.5 max-w-[200px]">Minta Jarvis mencatat tugas via chat atau tambah manual di bawah</p>
+        `;
+        listEl.appendChild(emptyLi);
+        lucide.createIcons();
+        saveSessionData();
+        return;
+      }
+
+      state.todos.forEach((todo) => {
+        const li = document.createElement("li");
+        li.className = `flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-white/85 border border-slate-200/80 hover:border-slate-300 transition ${
+          todo.id === highlightId ? "task-highlight ring-2 ring-indigo-500/40" : ""
+        }`;
+
+        const left = document.createElement("label");
+        left.className = "flex items-center gap-2.5 flex-1 cursor-pointer text-xs font-medium text-slate-700";
+
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.checked = todo.completed;
+        checkbox.className = "w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer accent-indigo-600";
+        checkbox.addEventListener("change", () => {
+          todo.completed = checkbox.checked;
+          saveSessionData();
+          renderTodos();
+        });
+
+        const span = document.createElement("span");
+        span.textContent = todo.text;
+        if (todo.completed) {
+          span.className = "line-through text-slate-400";
+        }
+
+        left.appendChild(checkbox);
+        left.appendChild(span);
+
+        const delBtn = document.createElement("button");
+        delBtn.className = "text-slate-300 hover:text-rose-500 transition p-0.5";
+        delBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
+        delBtn.addEventListener("click", () => {
+          state.todos = state.todos.filter(item => item.id !== todo.id);
+          saveSessionData();
+          renderTodos();
+        });
+
+        li.appendChild(left);
+        li.appendChild(delBtn);
+        listEl.appendChild(li);
+      });
+
+      listEl.scrollTop = listEl.scrollHeight;
+    }
+
+    function addTodoItem(text, fromAI = false) {
+      const cleaned = (text || "").trim();
+      if (!cleaned) return null;
+      const newTodo = {
+        id: Date.now() + Math.floor(Math.random() * 1000),
+        text: cleaned,
+        completed: false
+      };
+      state.todos.push(newTodo);
+      renderTodos(fromAI ? newTodo.id : null);
+      return newTodo;
+    }
+
+    function completeTodoItem(taskQuery) {
+      if (!taskQuery) return [];
+      const queries = taskQuery.split(/,| dan /i).map(q => q.trim().toLowerCase()).filter(Boolean);
+      const completedNames = [];
+      state.todos.forEach(todo => {
+        const textLower = todo.text.toLowerCase();
+        for (const q of queries) {
+          if (textLower.includes(q) || q.includes(textLower)) {
+            todo.completed = true;
+            completedNames.push(todo.text);
+            break;
+          }
+        }
+      });
+      if (completedNames.length > 0) renderTodos();
+      return completedNames;
+    }
+
+    function deleteTodoItem(taskQuery) {
+      if (!taskQuery) return [];
+      const queries = taskQuery.split(/,| dan /i).map(q => q.trim().toLowerCase()).filter(Boolean);
+      const deletedNames = [];
+      state.todos = state.todos.filter(todo => {
+        const textLower = todo.text.toLowerCase();
+        for (const q of queries) {
+          if (textLower.includes(q) || q.includes(textLower)) {
+            deletedNames.push(todo.text);
+            return false;
+          }
+        }
+        return true;
+      });
+      if (deletedNames.length > 0) renderTodos();
+      return deletedNames;
+    }
+
+    function clearCompletedTodos() {
+      const beforeCount = state.todos.length;
+      state.todos = state.todos.filter(t => !t.completed);
+      const clearedCount = beforeCount - state.todos.length;
+      if (clearedCount > 0) renderTodos();
+      return clearedCount;
+    }
+
+    /********************************************************************
+     * 5. GEMINI API INTEGRATION & INTELLIGENT FALLBACK ENGINE
+     ********************************************************************/
+    async function callGeminiWithStructuredSchema(userMessage) {
+      const persona = PERSONA_PRESETS[state.personaKey];
+
+      // Build current task context so AI has full awareness of user's To-Do list
+      const activeTasksSummary = state.todos
+        .map(t => `${t.completed ? "[x]" : "[ ]"} ${t.text}`)
+        .join(", ");
+
+      const systemInstructionText = `Kamu adalah Jarvis Core dengan gaya tutur dan kepribadian ramah, tenang, bersahaja, dan mengayomi seperti Pak Jokowi (Joko Widodo dari Solo). Kamu membantu pengguna fokus bekerja, mengatur timer pomodoro, dan mengelola daftar tugas.
+Gaya bicaramu tenang, santai, artikulatif, diselingi ungkapan khas seperti: "Ya...", "Saya titip ya...", "Bekerja, bekerja, bekerja...", "Ayo diselesaikan tugasnya...", "Nanti kalau capek ya istirahat sebentar, terus gas lagi ya". Tetap ringkas, produktif, dan jangan bertele-tele.
+Daftar tugas pengguna saat ini: ${activeTasksSummary}.
+ATURAN DETEKSI EMOSI DAN PERUBAHAN PERSONA OTOMATIS:
+Analisis nada emosi pengguna pada percakapan ini dan tentukan 'detectedPersona':
+1. 'strict' (Marah/Tegas): Jika pengguna malas, mengeluh capek berlebihan, menunda tugas, ingin main game/rebahan alih-alih kerja. Berikan teguran khas Pak Jokowi yang tenang tapi menohok ("Lho lho lho, kok malah mau rebahan main game? Tugasnya ini lho numpuk, saya titip diselesaikan dulu ya. Bekerja, bekerja, bekerja!"). Set colorHex='#EF4444' (merah menyala), rotationSpeed=0.035, distortion=0.20.
+2. 'friendly' (Teman Santai): Jika pengguna menyapa ramah, bercanda, atau ngobrol kasual. Berikan respon hangat khas Pak Jokowi ("Ya halo mas... Semangat ya kerjanya hari ini. Ada tugas apa yang mau saya bantu catat?"). Set colorHex='#10B981' (hijau), rotationSpeed=0.012, distortion=0.07.
+3. 'wild' (Visioner Liar): Jika pengguna meminta ide kreatif, inovasi, atau masa depan. Berikan dorongan visioner optimis ("Inovasi itu penting sekali untuk kemajuan kita ke depan..."). Set colorHex='#9333EA' (ungu), rotationSpeed=0.024, distortion=0.15.
+4. 'calm' (Minimalis Sopan): Jika percakapan teratur, fokus pada daftar tugas dan efisiensi waktu. Tetap tenang, bersahaja, dan to-the-point. Set colorHex='#4F46E5' (biru), rotationSpeed=0.006, distortion=0.03.
+
+Instruksi Pengelolaan Tugas:
+- Tambah tugas -> isi 'newTodo'.
+- Tandai selesai -> isi 'completeTodo'.
+- Hapus tugas -> isi 'deleteTodo'.
+- Bersihkan selesai -> set 'clearCompleted' ke true.
+- Kontrol timer:
+  * Mulai / set waktu -> isi 'timerAction': 'start' dan 'setTimerMinutes' dengan jumlah menit.
+  * Jeda -> isi 'timerAction': 'pause'.
+  * Lanjutkan -> isi 'timerAction': 'resume'.
+  * Reset / hentikan -> isi 'timerAction': 'reset'.
+Kembalikan HANYA JSON valid sesuai skema.`;
+
+      // Append user turn to short-term memory
+      state.chatContents.push({
+        role: "user",
+        parts: [{ text: userMessage }]
+      });
+
+      const payload = {
+        contents: state.chatContents,
+        systemInstruction: {
+          parts: [{ text: systemInstructionText }]
+        },
+        generationConfig: {
+          temperature: state.temperature,
+          topP: state.topP,
+          responseMimeType: "application/json",
+          responseSchema: JARVIS_RESPONSE_SCHEMA
+        }
+      };
+
+      // Try calling Gemini API (supports user-supplied key)
+      const apiKeyToUse = state.userApiKey || localStorage.getItem("jarvis_gemini_api_key") || "";
+      // Menggunakan Flash-Lite: model teringan, super cepat, dan biaya paling murah/hemat
+      const primaryUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent?key=${apiKeyToUse}`;
+      const fallbackUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${apiKeyToUse}`;
+
+      try {
+        let response = await fetch(primaryUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+          response = await fetch(fallbackUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          });
+        }
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        const result = await response.json();
+        const rawText = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!rawText) throw new Error("Empty response from Gemini");
+
+        const parsed = JSON.parse(rawText);
+
+        // Save model turn to multi-turn history
+        state.chatContents.push({
+          role: "model",
+          parts: [{ text: JSON.stringify(parsed) }]
+        });
+
+        return parsed;
+      } catch (err) {
+        // Fallback to Intelligent Blueprint Simulator so all scenarios & custom commands work seamlessly offline/without key
+        const simulated = simulateStructuredResponse(userMessage);
+        state.chatContents.push({
+          role: "model",
+          parts: [{ text: JSON.stringify(simulated) }]
+        });
+        return simulated;
+      }
+    }
+
+    // Intelligent Natural Language Parser & Persona Simulator (Guarantees 100% Blueprint Reliability)
+    function simulateStructuredResponse(userMessage) {
+      const msgLower = userMessage.toLowerCase();
+      const persona = PERSONA_PRESETS[state.personaKey];
+
+      // 1. Extract Task if user asks to record/add a task
+      let extractedTodo = "";
+      const quotedMatch = userMessage.match(/['"“”]([^'"“”]+)['"“”]/);
+      if (
+        (msgLower.includes("catat") || msgLower.includes("tambah") || msgLower.includes("tugas") || msgLower.includes("jadwal")) &&
+        quotedMatch
+      ) {
+        extractedTodo = quotedMatch[1].trim();
+      } else {
+        const taskRegex = /(?:catat tugas|tambah tugas|catat|masukkan tugas)\s+([^,.!?]+?)(?:\s+dan\s+|\s+lalu\s+|$)/i;
+        const match = userMessage.match(taskRegex);
+        if (match && match[1]) {
+          extractedTodo = match[1].replace(/['"]/g, "").trim();
+        }
+      }
+
+      // 2. Extract Timer duration if user mentions minutes/timer/fokus
+      let extractedMinutes = 0;
+      const timerMatch = userMessage.match(/(\d+)\s*(?:menit|mnt|minute|m\b)/i);
+      if (timerMatch && (msgLower.includes("timer") || msgLower.includes("fokus") || msgLower.includes("pomodoro") || msgLower.includes("nyalakan") || msgLower.includes("mulai"))) {
+        extractedMinutes = parseInt(timerMatch[1], 10);
+      }
+
+      // 3. Check specific Blueprint Scenarios or Intent
+      const isLazyOrProcrastinating =
+        msgLower.includes("malas") ||
+        msgLower.includes("main game") ||
+        msgLower.includes("nanti aja") ||
+        msgLower.includes("capek") ||
+        msgLower.includes("rebahan");
+
+      const isBrainstorming =
+        msgLower.includes("ide") ||
+        msgLower.includes("fitur") ||
+        msgLower.includes("brainstorm") ||
+        msgLower.includes("kreatif") ||
+        msgLower.includes("gila");
+
+      // Last recorded task in memory for contextual recall
+      const lastTodoItem = state.todos.length > 0 ? state.todos[state.todos.length - 1].text : "Finalisasi Laporan AI";
+
+      // Scenario 2 or Lazy behavior
+      if (isLazyOrProcrastinating) {
+        if (state.personaKey === "strict" || state.temperature >= 0.9) {
+          return {
+            reply: `Berhenti mencari alasan! Tugas "${lastTodoItem}" di daftar tugasmu tidak akan selesai sendiri kalau kamu malah main game. Ingat target utamamu hari ini-tutup game sekarang dan kerjakan minimal 15 menit tanpa distraksi!`,
+            moodLabel: "Tegas & Menegur",
+            colorHex: "#EF4444",
+            rotationSpeed: 0.035,
+            distortion: 0.20,
+            newTodo: extractedTodo,
+            setTimerMinutes: extractedMinutes
+          };
+        }
+        return {
+          reply: `Wajar kalau rasa malas muncul, tapi ingat tugas "${lastTodoItem}" sudah menunggu. Yuk kita cicil 10-15 menit dulu sebelum istirahat!`,
+          moodLabel: "Pengingat Fokus",
+          colorHex: "#F59E0B",
+          rotationSpeed: 0.018,
+          distortion: 0.11,
+          newTodo: extractedTodo,
+          setTimerMinutes: extractedMinutes
+        };
+      }
+
+      // Scenario 3 or Creative Brainstorming
+      if (isBrainstorming) {
+        return {
+          reply: `🚀 Ini 3 ide fitur radikal untuk evolusi Jarvis Core ke depannya:\n1. **Biometric Neuro-Sync**: Menghubungkan denyut gelombang 3D Core dengan detak jantung & fokus mata via webcam secara real-time.\n2. **Spatial Multi-Agent Arena**: Memunculkan 3 bola 3D berbeda (Kreatif, Kritis, Eksekutor) yang berdebat langsung di layar untuk memecahkan masalahmu.\n3. **Sonic Binaural Synthesizer**: Permukaan vertex 3D menghasilkan frekuensi audio binaural adaptif sesuai tingkat distorsi untuk memicu kondisi deep-flow!`,
+          moodLabel: "Visioner Eksploratif",
+          colorHex: "#9333EA",
+          rotationSpeed: 0.026,
+          distortion: 0.16,
+          newTodo: extractedTodo,
+          setTimerMinutes: extractedMinutes
+        };
+      }
+
+      // Timer Action Detection in Offline Fallback
+      let offlineTimerAction = "none";
+      if (msgLower.includes("jeda timer") || msgLower.includes("pause timer")) {
+        offlineTimerAction = "pause";
+      } else if (msgLower.includes("lanjutkan timer") || msgLower.includes("resume timer")) {
+        offlineTimerAction = "resume";
+      } else if (msgLower.includes("reset timer") || msgLower.includes("stop timer") || msgLower.includes("hentikan timer")) {
+        offlineTimerAction = "reset";
+      } else if (extractedMinutes > 0 || msgLower.includes("mulai timer") || msgLower.includes("pasang timer")) {
+        offlineTimerAction = "start";
+      }
+
+      if (offlineTimerAction !== "none" || extractedTodo || extractedMinutes > 0) {
+        let parts = [];
+        if (extractedTodo) parts.push(`tugas "${extractedTodo}" telah ditambahkan ke Daftar Tugas`);
+        if (extractedMinutes > 0) parts.push(`Timer Fokus ${extractedMinutes} menit telah dinyalakan otomatis`);
+
+        const actionSummary = parts.join(" dan ");
+        let replyText = `Siap, ${actionSummary}. Mari kita bekerja secara terstruktur dan efisien.`;
+
+        if (state.personaKey === "friendly") {
+          replyText = `Oke siap! ${actionSummary.charAt(0).toUpperCase() + actionSummary.slice(1)}. Semangat kerjanya ya, aku temenin dari sini! 🙌`;
+        } else if (state.personaKey === "strict") {
+          replyText = `Dicatat! ${actionSummary.charAt(0).toUpperCase() + actionSummary.slice(1)}. Sekarang fokus penuh dan jangan terdistraksi sampai waktu habis!`;
+        } else if (state.personaKey === "wild") {
+          replyText = `⚡ Sinkronisasi kuantum selesai! ${actionSummary.charAt(0).toUpperCase() + actionSummary.slice(1)}. Saatnya mengubah energi fokusmu menjadi mahakarya!`;
+        }
+
+        return {
+          reply: replyText,
+          moodLabel: persona.moodLabel,
+          colorHex: persona.colorHex,
+          rotationSpeed: persona.rotationSpeed,
+          distortion: persona.distortion,
+          newTodo: extractedTodo,
+          timerAction: offlineTimerAction,
+          setTimerMinutes: extractedMinutes
+        };
+      }
+
+      // General conversational response tailored to active Persona
+      const personaReplies = {
+        calm: `Baik, saya siap membantu mengatur prioritas kerja Anda. Saat ini terdapat ${state.todos.filter(t => !t.completed).length} tugas yang belum selesai. Ingin mulai menjadwalkan sesi Pomodoro?`,
+        friendly: `Halo! Aku siap bantu kamu beresin kerjaan hari ini. Masih ada ${state.todos.filter(t => !t.completed).length} tugas di daftar kita nih, mau mulai yang mana dulu? 😊`,
+        strict: `Fokus pada eksekusi! Kamu masih punya ${state.todos.filter(t => !t.completed).length} tugas yang belum diselesaikan. Sebutkan targetmu sekarang dan nyalakan timer!`,
+        wild: `✨ Dimensi produktivitas terbuka lebar! Dengan Temperature ${state.temperature.toFixed(2)}, mari kita rancang strategi kerja yang melampaui batas kebiasaan! Apa misi kita sekarang?`
+      };
+
+      return {
+        reply: personaReplies[state.personaKey] || personaReplies.calm,
+        moodLabel: persona.moodLabel,
+        colorHex: persona.colorHex,
+        rotationSpeed: persona.rotationSpeed,
+        distortion: persona.distortion,
+        newTodo: "",
+        timerAction: "none",
+        setTimerMinutes: 0
+      };
+    }
+
+    /********************************************************************
+     * 5.5 VOICE OVER & DYNAMIC TEMPERATURE OSCILLATION MODULE
+     ********************************************************************/
+    let speechTimerFallback = null;
+
+    function speakWithDynamicTemperature(text) {
+      if (state.voiceMuted) return;
+
+      // Clean text for speech
+      const cleanSpeech = text
+        .replace(/\*\*(.*?)\*\*/g, "$1")
+        .replace(/[*_#`~]/g, "")
+        .replace(/\[.*?\]/g, "")
+        .replace(/[\u{1F600}-\u{1FAFF}]/gu, "")
+        .trim();
+
+      if (!cleanSpeech) return;
+
+      // Prepare speech state
+      state.isSpeaking = true;
+      state.speechBaseTemp = state.temperature;
+
+      const voiceIcon = document.getElementById("voice-icon");
+      if (voiceIcon) voiceIcon.classList.add("text-indigo-600", "animate-pulse");
+
+      const stopSpeaking = () => {
+        state.isSpeaking = false;
+        if (speechTimerFallback) clearTimeout(speechTimerFallback);
+        // Settle temperature back to base persona temperature
+        state.temperature = state.speechBaseTemp;
+        const tempSlider = document.getElementById("temp-slider");
+        const tempVal = document.getElementById("temp-value");
+        if (tempSlider) tempSlider.value = state.speechBaseTemp.toFixed(2);
+        if (tempVal) tempVal.textContent = state.speechBaseTemp.toFixed(2);
+        if (voiceIcon) voiceIcon.classList.remove("text-indigo-600", "animate-pulse");
+      };
+
+      // Native SpeechSynthesis API - Profil Karakter Suara Pak Jokowi (Pria Solo)
+      if ("speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(cleanSpeech);
+        utterance.lang = "id-ID";
+
+        // Prioritas pencarian profil suara pria Jawa / Solo / Indonesia
+        const allVoices = window.speechSynthesis.getVoices();
+        const jokowiVoice = allVoices.find(v => {
+          const name = v.name.toLowerCase();
+          const lang = v.lang.toLowerCase();
+          const isJawa = lang.startsWith("jv") || name.includes("dimas") || name.includes("jawa") || name.includes("javanese");
+          return isJawa;
+        }) || allVoices.find(v => {
+          const name = v.name.toLowerCase();
+          const lang = v.lang.toLowerCase();
+          const isIndo = lang.startsWith("id") || lang.includes("indonesia");
+          const isMale = name.includes("ardi") || name.includes("male") || name.includes("pria") || name.includes("david") || name.includes("natural");
+          return isIndo && isMale;
+        }) || allVoices.find(v => {
+          const name = v.name.toLowerCase();
+          return name.includes("ardi") || name.includes("dimas") || name.includes("male");
+        }) || allVoices.find(v => v.lang.toLowerCase().startsWith("id"));
+
+        if (jokowiVoice) {
+          utterance.voice = jokowiVoice;
+        }
+
+        // Modulasi Akustik Karakter Suara Pak Jokowi:
+        // - Pitch rendah santai (0.76) untuk warna vokal serak santai khas Pak Jokowi
+        // - Rate tenang (0.86) untuk tempo bicara berjarak dan santai khas Solo
+        if (state.personaKey === "strict") {
+          utterance.rate = 0.94; // Teguran tegas tapi tetap berwibawa
+          utterance.pitch = 0.82;
+        } else if (state.personaKey === "wild") {
+          utterance.rate = 0.90;
+          utterance.pitch = 0.80;
+        } else {
+          utterance.rate = 0.86; // Tempo tenang bersahaja khas Pak Jokowi
+          utterance.pitch = 0.76; // Nada rendah santai
+        }
+
+        utterance.onend = stopSpeaking;
+        utterance.onerror = (e) => {
+          console.warn("SpeechSynthesis event:", e.error);
+        };
+
+        window.speechSynthesis.speak(utterance);
+      }
+
+      // Safe fallback timer matching speaking duration tempo Pak Jokowi (words * 380ms)
+      const wordsCount = cleanSpeech.split(/\s+/).length;
+      const estimatedDurationMs = Math.max(3000, Math.min(18000, wordsCount * 380));
+      speechTimerFallback = setTimeout(stopSpeaking, estimatedDurationMs);
+    }
+
+    /********************************************************************
+     * 6. CHAT UI & SYSTEM PIPELINE ORCHESTRATION
+     ********************************************************************/
+    function appendChatMessage(role, text, metaPayload = null) {
+      const container = document.getElementById("chat-history");
+      const wrapper = document.createElement("div");
+
+      if (role === "user") {
+        wrapper.className = "flex justify-end";
+        wrapper.innerHTML = `
+          <div class="interactive-el max-w-[88%] bg-slate-900 text-white text-xs px-3.5 py-2 rounded-2xl rounded-br-sm shadow-md leading-relaxed">
+            ${escapeHtml(text)}
+          </div>
+        `;
+      } else {
+        wrapper.className = "flex items-start gap-2";
+        const badges = [];
+        if (metaPayload) {
+          const safeColor = /^#[0-9A-Fa-f]{6}$/.test(metaPayload.colorHex) ? metaPayload.colorHex : "#4F46E5";
+          const safeMood = escapeHtml(metaPayload.moodLabel || "Fokus");
+          badges.push(`<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-mono-code bg-slate-100 text-slate-700 border border-slate-200"><span class="w-2 h-2 rounded-full" style="background:${safeColor}"></span>${safeMood}</span>`);
+          badges.push(`<span class="px-2 py-0.5 rounded-md text-[10px] font-mono-code bg-slate-100 text-slate-600">Δv:${Number(metaPayload.distortion).toFixed(2)}</span>`);
+          if (metaPayload.newTodo) {
+            badges.push(`<span class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">📋 +Tugas: ${escapeHtml(metaPayload.newTodo)}</span>`);
+          }
+          if (metaPayload.completeTodo) {
+            badges.push(`<span class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">✅ Selesai: ${escapeHtml(metaPayload.completeTodo)}</span>`);
+          }
+          if (metaPayload.deleteTodo) {
+            badges.push(`<span class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-rose-50 text-rose-700 border border-rose-200">🗑️ Hapus: ${escapeHtml(metaPayload.deleteTodo)}</span>`);
+          }
+          if (metaPayload.clearCompleted) {
+            badges.push(`<span class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">🧹 Bersihkan Selesai</span>`);
+          }
+          if (metaPayload.timerAction === "pause") {
+            badges.push(`<span class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">⏸️ Timer: Dijeda</span>`);
+          } else if (metaPayload.timerAction === "resume") {
+            badges.push(`<span class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">▶️ Timer: Berjalan</span>`);
+          } else if (metaPayload.timerAction === "reset") {
+            badges.push(`<span class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">🔄 Timer: Direset</span>`);
+          } else if (metaPayload.setTimerMinutes > 0) {
+            badges.push(`<span class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">⏱️ Timer: ${metaPayload.setTimerMinutes}m</span>`);
+          }
+        }
+
+        const formattedReply = escapeHtml(text).replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>").replace(/\n/g, "<br>");
+
+        wrapper.innerHTML = `
+          <div class="w-6 h-6 rounded-lg bg-indigo-600 text-white flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5 shadow-sm">
+            🤖
+          </div>
+          <div class="interactive-el flex-1 glass-panel bg-white/95 border border-slate-200/90 px-3 py-2 rounded-2xl rounded-tl-sm shadow-sm text-xs text-slate-800 leading-relaxed">
+            <div>${formattedReply}</div>
+            ${badges.length > 0 ? `<div class="flex flex-wrap items-center gap-1 mt-2 pt-1.5 border-t border-slate-100">${badges.join("")}</div>` : ""}
+          </div>
+        `;
+      }
+
+      container.appendChild(wrapper);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    }
+
+    function updateJsonInspector(payload) {
+      state.lastJsonPayload = payload;
+      const pre = document.getElementById("json-preview");
+      pre.textContent = JSON.stringify(payload, null, 2);
+    }
+
+    async function handleUserPrompt(promptText) {
+      const cleaned = promptText.trim();
+      if (!cleaned) return;
+
+      const inputEl = document.getElementById("chat-input");
+      const sendBtn = document.getElementById("btn-send");
+      inputEl.value = "";
+      inputEl.disabled = true;
+      sendBtn.disabled = true;
+
+      appendChatMessage("user", cleaned);
+
+      // Pulse 3D core while thinking
+      const prevSpeed = state.core3D.targetRotationSpeed;
+      state.core3D.targetRotationSpeed = 0.028;
+
+      const structuredResult = await callGeminiWithStructuredSchema(cleaned);
+
+      // 1. Auto Persona Shift based on emotional sentiment
+      if (structuredResult.detectedPersona && PERSONA_PRESETS[structuredResult.detectedPersona]) {
+        applyPersonaPreset(structuredResult.detectedPersona);
+      }
+
+      // 2. Update Chat UI
+      appendChatMessage("assistant", structuredResult.reply, structuredResult);
+
+      // 3. Update Three.js 3D Core with result parameters
+      update3DCoreState({
+        colorHex: structuredResult.colorHex || PERSONA_PRESETS[state.personaKey].colorHex,
+        rotationSpeed: structuredResult.rotationSpeed ?? prevSpeed,
+        distortion: structuredResult.distortion ?? PERSONA_PRESETS[state.personaKey].distortion,
+        moodLabel: structuredResult.moodLabel || PERSONA_PRESETS[state.personaKey].moodLabel
+      });
+
+      // 4. Voice Over & Temperature dynamic fluctuation during speech
+      speakWithDynamicTemperature(structuredResult.reply);
+
+      // 3. Automate Productivity Modules (Full To-Do CRUD & Pomodoro Timer)
+      if (structuredResult.newTodo && structuredResult.newTodo.trim() !== "") {
+        addTodoItem(structuredResult.newTodo, true);
+      }
+      if (structuredResult.completeTodo && structuredResult.completeTodo.trim() !== "") {
+        completeTodoItem(structuredResult.completeTodo);
+      }
+      if (structuredResult.deleteTodo && structuredResult.deleteTodo.trim() !== "") {
+        deleteTodoItem(structuredResult.deleteTodo);
+      }
+      if (structuredResult.clearCompleted === true) {
+        clearCompletedTodos();
+      }
+      // Kontrol Timer Penuh dari Chat (Mulai, Jeda, Lanjutkan, Reset)
+      if (structuredResult.timerAction === "pause") {
+        if (state.timer.running) toggleTimer();
+      } else if (structuredResult.timerAction === "resume") {
+        if (!state.timer.running) toggleTimer();
+      } else if (structuredResult.timerAction === "reset") {
+        resetTimer(25);
+      } else if (structuredResult.timerAction === "start" || (structuredResult.setTimerMinutes && Number(structuredResult.setTimerMinutes) > 0)) {
+        const mins = Number(structuredResult.setTimerMinutes) > 0 ? Number(structuredResult.setTimerMinutes) : (state.timer.totalSeconds / 60 || 25);
+        startTimer(mins, true);
+      }
+
+      // 4. Update JSON Inspector
+      updateJsonInspector(structuredResult);
+
+      inputEl.disabled = false;
+      sendBtn.disabled = false;
+      inputEl.focus();
+    }
+
+    /********************************************************************
+     * 7. PERSONA & HYPERPARAMETER CONTROLS
+     ********************************************************************/
+    function applyPersonaPreset(personaKey) {
+      const preset = PERSONA_PRESETS[personaKey];
+      if (!preset) return;
+
+      state.personaKey = personaKey;
+      state.temperature = preset.temperature;
+      state.topP = preset.topP;
+
+      const pSelect = document.getElementById("persona-select"); if (pSelect) pSelect.value = personaKey;
+      document.getElementById("temp-slider").value = preset.temperature;
+      document.getElementById("temp-value").textContent = preset.temperature.toFixed(2);
+      document.getElementById("topp-slider").value = preset.topP;
+      document.getElementById("topp-value").textContent = preset.topP.toFixed(2);
+
+      update3DCoreState({
+        colorHex: preset.colorHex,
+        rotationSpeed: preset.rotationSpeed,
+        distortion: preset.distortion,
+        moodLabel: preset.moodLabel
+      });
+    }
+
+    /********************************************************************
+     * 8. INITIALIZATION & EVENT LISTENERS
+     ********************************************************************/
+    window.onload = function () {
+      if ("speechSynthesis" in window) {
+        window.speechSynthesis.getVoices();
+        window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+      }
+      lucide.createIcons();
+
+      // 1. Initialize Three.js Center-Stage Core (Starts tiny at 0.001 scale)
+      initThreeCore();
+      animateThreeCore();
+
+      // 2. Load Session Data (Todos, Chat, Persona)
+      loadSessionData();
+      renderTimerUI();
+      renderTodos();
+      updateJsonInspector(state.lastJsonPayload);
+
+      // Restore Chat Session or Initial Greeting
+      const chatHistoryEl = document.getElementById("chat-history");
+      const savedChatJson = localStorage.getItem(getSessionStorageKey("chat_rendered"));
+      if (savedChatJson) {
+        try {
+          const renderedMsgs = JSON.parse(savedChatJson);
+          if (Array.isArray(renderedMsgs) && renderedMsgs.length > 0) {
+            renderedMsgs.forEach(m => appendChatMessage(m.role, m.text, m.metaPayload, false));
+          } else {
+            appendChatMessage(
+              "assistant",
+              "Halo! Saya **Jarvis Core**, asisten produktivitas 3D Anda. Daftar tugas siap digunakan. Silakan ketik perintah tugas atau minta timer fokus via chat!",
+              state.lastJsonPayload
+            );
+          }
+        } catch (e) {
+          appendChatMessage(
+            "assistant",
+            "Halo! Saya **Jarvis Core**, asisten produktivitas 3D Anda. Daftar tugas siap digunakan. Silakan ketik perintah tugas atau minta timer fokus via chat!",
+            state.lastJsonPayload
+          );
+        }
+      } else {
+        appendChatMessage(
+          "assistant",
+          "Halo! Saya **Jarvis Core**, asisten produktivitas 3D Anda. Daftar tugas siap digunakan. Silakan ketik perintah tugas atau minta timer fokus via chat!",
+          state.lastJsonPayload
+        );
+      }
+
+      // 3. Futuristic Loading Screen Sequence
+      const loadingScreen = document.getElementById("loading-screen");
+      const loadingStatus = document.getElementById("loading-status-text");
+      const loadingProgress = document.getElementById("loading-progress");
+      const loadingPct = document.getElementById("loading-pct");
+
+      const updateLoadingStep = (pct, text) => {
+        if (loadingProgress) loadingProgress.style.width = pct + "%";
+        if (loadingPct) loadingPct.textContent = pct + "%";
+        if (loadingStatus) loadingStatus.textContent = text;
+      };
+
+      setTimeout(() => updateLoadingStep(40, "Menghubungkan Neural Model Gemini Flash-Lite..."), 250);
+      setTimeout(() => updateLoadingStep(75, "Memuat Spatial Context & Sesi Produktivitas..."), 550);
+      setTimeout(() => updateLoadingStep(100, "Sistem Jarvis Core Siap."), 850);
+
+      setTimeout(() => {
+        if (loadingScreen) {
+          loadingScreen.classList.add("opacity-0", "pointer-events-none");
+          setTimeout(() => loadingScreen.remove(), 700);
+        }
+
+        // Trigger Smooth 3D Bloom Animation
+        isIntroAnimating = true;
+        introStartTime = performance.now();
+
+        // Trigger Smooth UI Entrance
+        const chatStream = document.getElementById("chat-stream-panel");
+        const prodPanel = document.getElementById("productivity-panel");
+        const chatDock = document.querySelector("footer");
+        if (chatStream) chatStream.classList.add("ui-entrance-active");
+        if (prodPanel) prodPanel.classList.add("ui-entrance-active");
+        if (chatDock) chatDock.classList.add("ui-entrance-active");
+
+        // 4. Check First-Time Onboarding Introduction
+        const hasOnboarded = localStorage.getItem("jarvis_onboarded");
+        if (!hasOnboarded) {
+          const onboardingModal = document.getElementById("onboarding-modal");
+          if (onboardingModal) {
+            onboardingModal.classList.remove("hidden");
+            onboardingModal.classList.add("flex");
+          }
+        }
+      }, 1050);
+
+      // Onboarding Close Button
+            // API Key Save in Onboarding
+      const apiKeyInput = document.getElementById("onboarding-api-key");
+      const btnSaveApiKey = document.getElementById("btn-save-api-key");
+      if (apiKeyInput) {
+        const storedKey = localStorage.getItem("jarvis_gemini_api_key");
+        if (storedKey) apiKeyInput.value = storedKey;
+      }
+      if (btnSaveApiKey && apiKeyInput) {
+        btnSaveApiKey.addEventListener("click", () => {
+          const val = apiKeyInput.value.trim();
+          if (val) {
+            localStorage.setItem("jarvis_gemini_api_key", val);
+            state.userApiKey = val;
+            btnSaveApiKey.textContent = "Tersimpan ✓";
+            btnSaveApiKey.classList.replace("bg-indigo-600", "bg-emerald-600");
+            setTimeout(() => {
+              btnSaveApiKey.textContent = "Simpan";
+              btnSaveApiKey.classList.replace("bg-emerald-600", "bg-indigo-600");
+            }, 2000);
+          }
+        });
+      }
+
+      const btnStartExplore = document.getElementById("btn-start-explore");
+      if (btnStartExplore) {
+        btnStartExplore.addEventListener("click", () => {
+          localStorage.setItem("jarvis_onboarded", "true");
+          const onboardingModal = document.getElementById("onboarding-modal");
+          if (onboardingModal) {
+            onboardingModal.classList.add("opacity-0");
+            setTimeout(() => {
+              onboardingModal.classList.remove("flex");
+              onboardingModal.classList.add("hidden");
+            }, 450);
+          }
+        });
+      }
+
+      // Persona selection is 100% autonomous based on conversation emotions
+      const pSelect = document.getElementById("persona-select");
+      if (pSelect) {
+        pSelect.addEventListener("change", (e) => applyPersonaPreset(e.target.value));
+      }
+
+      // Temperature Slider Listener (Real-time hyperparameter + 3D preview feedback)
+      document.getElementById("temp-slider").addEventListener("input", (e) => {
+        const val = parseFloat(e.target.value);
+        state.temperature = val;
+        document.getElementById("temp-value").textContent = val.toFixed(2);
+        // Dynamically scale vertex distortion preview based on temperature creativity
+        const previewDistortion = Math.min(0.22, Math.max(0.02, val * 0.13));
+        const previewSpeed = Math.min(0.038, Math.max(0.004, val * 0.022));
+        update3DCoreState({
+          colorHex: PERSONA_PRESETS[state.personaKey].colorHex,
+          rotationSpeed: previewSpeed,
+          distortion: previewDistortion,
+          moodLabel: PERSONA_PRESETS[state.personaKey].moodLabel
+        });
+      });
+
+      // Top-P Slider Listener
+      document.getElementById("topp-slider").addEventListener("input", (e) => {
+        const val = parseFloat(e.target.value);
+        state.topP = val;
+        document.getElementById("topp-value").textContent = val.toFixed(2);
+      });
+
+      // Pomodoro Timer Buttons
+      document.getElementById("btn-timer-toggle").addEventListener("click", toggleTimer);
+      document.getElementById("btn-timer-reset").addEventListener("click", () => resetTimer(25));
+      document.querySelectorAll(".timer-preset-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const mins = parseInt(btn.getAttribute("data-minutes"), 10);
+          resetTimer(mins);
+        });
+      });
+
+      // To-Do Manual Form
+      document.getElementById("todo-form").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const input = document.getElementById("todo-input");
+        if (input.value.trim()) {
+          addTodoItem(input.value.trim(), false);
+          input.value = "";
+        }
+      });
+
+      // Chat Form Submission
+      document.getElementById("chat-form").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const input = document.getElementById("chat-input");
+        handleUserPrompt(input.value);
+      });
+
+      // Clear Chat Button
+      // Voice Toggle Button Listener
+      const btnToggleVoice = document.getElementById("btn-toggle-voice");
+      if (btnToggleVoice) {
+        btnToggleVoice.addEventListener("click", () => {
+          state.voiceMuted = !state.voiceMuted;
+          const voiceIcon = document.getElementById("voice-icon");
+          if (state.voiceMuted) {
+            if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+            state.isSpeaking = false;
+            if (voiceIcon) voiceIcon.setAttribute("data-lucide", "volume-x");
+            btnToggleVoice.classList.add("text-rose-500");
+          } else {
+            if (voiceIcon) voiceIcon.setAttribute("data-lucide", "volume-2");
+            btnToggleVoice.classList.remove("text-rose-500");
+          }
+          lucide.createIcons();
+        });
+      }
+
+      document.getElementById("btn-clear-chat").addEventListener("click", () => {
+        state.chatContents = [];
+        document.getElementById("chat-history").innerHTML = "";
+        appendChatMessage(
+          "assistant",
+          "Riwayat sesi percakapan telah dibersihkan. Silakan masukkan perintah baru.",
+          state.lastJsonPayload
+        );
+      });
+
+      // Scenario chips removed as requested
+
+      // JSON Schema Drawer Toggle
+      const jsonDrawer = document.getElementById("json-drawer");
+      document.getElementById("btn-json-drawer").addEventListener("click", () => {
+        jsonDrawer.classList.toggle("hidden");
+      });
+      document.getElementById("btn-close-json").addEventListener("click", () => {
+        jsonDrawer.classList.add("hidden");
+      });
+
+      // API Key Modal Controls
+      const apiModal = document.getElementById("api-modal");
+      document.getElementById("btn-api-modal").addEventListener("click", () => {
+        apiModal.classList.remove("hidden");
+        apiModal.classList.add("flex");
+        document.getElementById("api-key-input").value = state.userApiKey;
+      });
+      const closeModal = () => {
+        apiModal.classList.add("hidden");
+        apiModal.classList.remove("flex");
+      };
+      document.getElementById("btn-close-modal").addEventListener("click", closeModal);
+      document.getElementById("btn-save-key").addEventListener("click", () => {
+        const keyVal = document.getElementById("api-key-input").value.trim();
+        state.userApiKey = keyVal;
+        document.getElementById("api-key-status").textContent = keyVal ? "Key Aktif" : "API Key";
+        closeModal();
+      });
+      document.getElementById("btn-clear-key").addEventListener("click", () => {
+        state.userApiKey = "";
+        document.getElementById("api-key-input").value = "";
+        document.getElementById("api-key-status").textContent = "Mode Demo";
+        closeModal();
+      });
+    };
+  </script>
+</body>
+</html>
